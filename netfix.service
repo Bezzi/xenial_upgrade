@@ -1,0 +1,9 @@
+[Unit]
+Description= Netfix service.
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/netfix.sh
+
+[Install]
+WantedBy=multi-user.target 
