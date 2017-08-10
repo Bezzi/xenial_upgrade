@@ -8,24 +8,28 @@ if [ "$EUID" -ne 0 ]
   exit
 fi
 
+DIFACE=`route -n | grep ^0.0.0.0 | sed 's/  */ /g' | cut -d' ' -f8`
 SMBIOS_V=$(dmidecode -t 0 | grep SMBIOS | tail -1 | awk '{print $2}')
 if [ $(echo "$SMBIOS_V<2.6"| bc ) == 0 ]
 then
   printf "${GREEN}GOOD NEWS:${NC} You can change interface naming with biosdevname. \n"
 else
-  printf "${RED}BAD NEWS:${NC} You can not change interface naming with biosdevname. Create some ${RED}RULES${NC} !! \n"
-  exit 0
-fi
-
-printf "Checking for needed packets ..\n"
-sleep 1;
-if [ $(dpkg-query -W -f='${Status}' bc 2>/dev/null | grep -c "ok installed") -eq 0 ];
-then
-  apt-get install -y bc;
-fi
-if [ $(dpkg-query -W -f='${Status}' tee 2>/dev/null | grep -c "ok installed") -eq 0 ];
-then
-  apt-get install -y bc;
+  printf "${RED}BAD NEWS:${NC} You can not change interface naming with biosdevname. Creating some ${RED}RULES${NC} !! \n"
+  sleep 2;
+  if [  "$(ls -A /etc/udev/rules.d/)" ];
+  then
+    printf "${RED}Rules are already present:${NC} \n"
+    cat /etc/udev/rules.d/70-persistent-net.rules
+    printf "\n"
+    exit 0
+  else
+    MAC=$(ifconfig $DIFACE | grep HWaddr | awk '{print $5}')
+    echo "SUBSYSTEM==\"net\", ACTION==\"add\", DRIVERS==\"?*\", ATTR{address}==\"$MAC\", ATTR{dev_id}==\"0x0\", ATTR{type}==\"1\", NAME=\"eth0\""   > /etc/udev/rules.d/70-persistent-net.rules
+    printf "${GREEN}Rules created:${NC} \n"
+    cat /etc/udev/rules.d/70-persistent-net.rules
+    printf "Reboot to verify. \n"
+    exit 0
+   fi
 fi
 
 printf "Cheking for udev rules.. \n"
@@ -50,7 +54,6 @@ then
 fi
 printf "Package installed\n"
 
-DIFACE=`route -n | grep ^0.0.0.0 | sed 's/  */ /g' | cut -d' ' -f8`
 NIFACE=`biosdevname -i $DIFACE`
 printf "Default interface ${RED}$DIFACE${NC} will be re-named to ${GREEN}$NIFACE${NC} \n"
 sleep 2;
@@ -66,7 +69,7 @@ printf "Backing up grub.cfg .. \n"
 cp /etc/default/grub /etc/default/grub.bak
 sleep 1;
 printf "Updating grub configuration .. \n"
-sed '0,/GRUB_CMDLINE_LINUX_DEFAULT/{s/.*GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT="biosdevname=1"/}' /etc/default/grub.bak | tee /etc/default/grub 
+sed '0,/GRUB_CMDLINE_LINUX_DEFAULT/{s/.*GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT="biosdevname=1"/}' /etc/default/grub > /etc/default/grub 
 update-grub
 
 printf "Generating ${RED}NETFIX${NC} script .. \n"
