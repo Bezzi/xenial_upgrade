@@ -66,7 +66,7 @@ printf "Backing up grub.cfg .. \n"
 cp /etc/default/grub /etc/default/grub.bak
 sleep 1;
 printf "Updating grub configuration .. \n"
-sed '0,/GRUB_CMDLINE_LINUX_DEFAULT/{s/.*GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT="biosdevname=1"/}' /etc/default/grub | tee /etc/default/grub 
+sed '0,/GRUB_CMDLINE_LINUX_DEFAULT/{s/.*GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT="biosdevname=1"/}' /etc/default/grub.bak | tee /etc/default/grub 
 update-grub
 
 printf "Generating ${RED}NETFIX${NC} script .. \n"
