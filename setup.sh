@@ -32,6 +32,7 @@ else
    fi
 fi
 
+printf "Your current interface name is : ${RED}$DIFACE${NC} \n"
 printf "Cheking for udev rules.. \n"
 if [  "$(ls -A /etc/udev/rules.d/)" ];
 then
