@@ -1,14 +1,14 @@
 #!/bin/bash
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
 if [ "$EUID" -ne 0 ]
   then echo "Please run as root"
   exit
 fi
 
-
+###### HANDLES NEEDED PACKETS ######
 printf "Checking for needed packets..\n"
 if [ $(dpkg-query -W -f='${Status}' bc 2>/dev/null | grep -c "ok installed") -eq 0 ];
 then
@@ -20,6 +20,7 @@ then
 fi
 printf "Package installed\n"
 
+###### VERIFIES IF INTERFACES CAN BE RENAMED ######
 DIFACE=`route -n | grep ^0.0.0.0 | sed 's/  */ /g' | cut -d' ' -f8`
 SMBIOS_V=$(dmidecode -t 0 | grep SMBIOS | tail -1 | awk '{print $2}')
 if [ $(echo "$SMBIOS_V<2.6"| bc ) == 0 ]
@@ -44,6 +45,7 @@ else
    fi
 fi
 
+###### HANDLES UDEV RULES ######
 printf "Your current interface name is : ${RED}$DIFACE${NC} \n"
 printf "Cheking for udev rules.. \n"
 if [  "$(ls -A /etc/udev/rules.d/)" ];
@@ -59,6 +61,7 @@ else
   printf "No rules present. \n"
 fi
 
+###### HANDLES BIOSDEVNAME PACKET ######
 printf "Checking biosdevname packet..\n"
 sleep 2;
 if [ $(dpkg-query -W -f='${Status}' biosdevname 2>/dev/null | grep -c "ok installed") -eq 0 ];
@@ -71,20 +74,27 @@ NIFACE=`biosdevname -i $DIFACE`
 printf "Default interface ${RED}$DIFACE${NC} will be re-named to ${GREEN}$NIFACE${NC} \n"
 sleep 2;
 
-printf "Backing up interfaces file .. \n"
-cp /etc/network/interfaces /etc/network/interfaces.bak
+###### HANDLES NETWORK INTERFACE FILE ######
+if [ ! -f /etc/network/interfaces.bak ]; then
+  printf "Backing up interfaces file .. \n"
+  cp /etc/network/interfaces /etc/network/interfaces.bak
+fi
 printf "Updating /etc/network/interfaces file .. \n"
-sed "s/$DIFACE/$NIFACE/g" /etc/network/interfaces.bak | tee  /etc/network/intefaces
+sed "s/$DIFACE/$NIFACE/g" /etc/network/interfaces.bak | tee /etc/network/interfaces
 sleep 2;
 
 
-printf "Backing up grub.cfg .. \n"
-cp /etc/default/grub /etc/default/grub.bak
+###### HANDLES GRUB CONFIG ######
+if [ ! -f /etc/default/grub.bak ]; then
+    printf "Backing up grub.cfg .. \n"
+    cp /etc/default/grub /etc/default/grub.bak
+fi
 sleep 1;
 printf "Updating grub configuration .. \n"
 sed '0,/GRUB_CMDLINE_LINUX_DEFAULT/{s/.*GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT="biosdevname=1"/}' /etc/default/grub.bak | tee /etc/default/grub
 update-grub
 
+##### HANDLES NETFIX SERVICE #####
 printf "Generating ${RED}NETFIX${NC} script .. \n"
 sleep 2;
 cp netfix.sh  /usr/local/bin/netfix.sh
