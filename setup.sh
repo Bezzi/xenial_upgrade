@@ -8,6 +8,18 @@ if [ "$EUID" -ne 0 ]
   exit
 fi
 
+
+printf "Checking for needed packets..\n"
+if [ $(dpkg-query -W -f='${Status}' bc 2>/dev/null | grep -c "ok installed") -eq 0 ];
+then
+  apt-get install -y bc;
+fi
+if [ $(dpkg-query -W -f='${Status}' tee 2>/dev/null | grep -c "ok installed") -eq 0 ];
+then
+  apt-get install -y tee;
+fi
+printf "Package installed\n"
+
 DIFACE=`route -n | grep ^0.0.0.0 | sed 's/  */ /g' | cut -d' ' -f8`
 SMBIOS_V=$(dmidecode -t 0 | grep SMBIOS | tail -1 | awk '{print $2}')
 if [ $(echo "$SMBIOS_V<2.6"| bc ) == 0 ]
@@ -70,7 +82,7 @@ printf "Backing up grub.cfg .. \n"
 cp /etc/default/grub /etc/default/grub.bak
 sleep 1;
 printf "Updating grub configuration .. \n"
-sed '0,/GRUB_CMDLINE_LINUX_DEFAULT/{s/.*GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT="biosdevname=1"/}' /etc/default/grub > /etc/default/grub 
+sed '0,/GRUB_CMDLINE_LINUX_DEFAULT/{s/.*GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLINE_LINUX_DEFAULT="biosdevname=1"/}' /etc/default/grub > /etc/default/grub
 update-grub
 
 printf "Generating ${RED}NETFIX${NC} script .. \n"
