@@ -14,7 +14,7 @@ while [ $count -lt $MAX_ITERATIONS ]; do
   rc=$?
 
   if [ $rc -eq 0 ]; then
-    echo 'Network changes worked, doing nothing' >> /tmp/netfix.log
+    echo 'Network changes worked, doing nothing \n' >> /tmp/netfix.log
     exit 0
   fi
 
@@ -23,7 +23,8 @@ while [ $count -lt $MAX_ITERATIONS ]; do
 done
 
 if [ $rc -ge 1 ]; then
-  echo 'Server has no connectivity'
+  echo 'Server has no connectivity \n' >> /tmp/netfix.log
+  systemctl status networking.service >> /tmp/netfix.log
   puppet agent --disable "Netfix disabled puppet, you probably screwed up networking."
   cp $IF_BACKUP_FILE /etc/network/interfaces
   service networking restart >/dev/null
@@ -31,10 +32,11 @@ if [ $rc -ge 1 ]; then
   if [ rc -ge 1 ];
   then
     # Network didn't come back up
+    echo "Network didn't come back up, restoring grub \n" >> /tmo/netfix.log
     cp $GRUB_FILE /etc/default/grub
     update-grub
     reboot
   else
     exit 0
   fi
-fi 
+fi
