@@ -12,7 +12,7 @@ fi
 printf "Checking for needed packages..\n"
 if [ $(dpkg-query -W -f='${Status}' bc 2>/dev/null | grep -c "ok installed") -eq 0 ];
 then
-  apt-get install -y bc || echo "bc installation failed" && exit ;
+  apt-get install -y bc || (echo "bc installation failed" && exit) ;
 fi
 
 ########################################## VERIFIES IF INTERFACES CAN BE RENAMED ################################
@@ -61,7 +61,7 @@ printf "Checking biosdevname packet..\n"
 sleep 2;
 if [ $(dpkg-query -W -f='${Status}' biosdevname 2>/dev/null | grep -c "ok installed") -eq 0 ];
 then
-  apt-get install -y biosdevname || echo "biosdevname installation failed" && exit ;;
+  apt-get install -y biosdevname || (echo "biosdevname installation failed" && exit) ;
 fi
 printf "Package installed\n"
 
