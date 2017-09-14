@@ -43,7 +43,7 @@ fi
 ########################################## HANDLES UDEV RULES ####################################################
 printf "Your current interface name is : ${RED}$DIFACE${NC} \n"
 printf "Cheking for udev rules.. \n"
-if [  "$(ls -A /etc/udev/rules.d/70-persistent-net.rules)" ];
+if [ -f /etc/udev/rules.d/70-persistent-net.rules ];
 then
   echo "Do you wish to remove the network udev rules?"
   select yn in "Yes" "No"; do
@@ -56,8 +56,8 @@ else
   printf "No network rules present. \n"
 fi
 
-########################################## HANDLES BIOSDEVNAME PACKET #############################################
-printf "Checking biosdevname packet..\n"
+########################################## HANDLES BIOSDEVNAME PACKAGE #############################################
+printf "Checking biosdevname package..\n"
 sleep 2;
 if [ $(dpkg-query -W -f='${Status}' biosdevname 2>/dev/null | grep -c "ok installed") -eq 0 ];
 then
@@ -67,9 +67,9 @@ printf "Package installed\n"
 
 NIFACE=`biosdevname -i $DIFACE`
 retcode=$?
-if [ retcode -ne 0 ]; then
+if [ $retcode -ne 0 ]; then
     echo "${RED}ERROR: $retcode ${NC} - Biosdevname \n"
-    return retcode
+    return $retcode
 fi
 
 printf "Default interface ${RED}$DIFACE${NC} will be re-named to ${GREEN}$NIFACE${NC} \n"
@@ -97,9 +97,9 @@ sed '0,/GRUB_CMDLINE_LINUX_DEFAULT/{s/.*GRUB_CMDLINE_LINUX_DEFAULT.*/GRUB_CMDLIN
 update-grub
 grub-script-check /boot/grub/grub.cfg
 retcode=$?
-if [ retcode -ne 0 ]; then
+if [ $retcode -ne 0 ]; then
     echo "${RED}ERROR: $retcode ${NC} -  Grub configuration is invalid \n"
-    return retcode
+    return $retcode
 fi
 
 ############################################# HANDLES NETFIX SERVICE #############################################
